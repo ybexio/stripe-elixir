@@ -29,14 +29,14 @@ defmodule Stripe do
   """
 
   defp get_secret_key do
-    System.get_env("STRIPE_SECRET_KEY") || 
-    Application.get_env(:stripe, :secret_key) || 
+    System.get_env("STRIPE_SECRET_KEY") ||
+    Application.get_env(:stripe, :secret_key) ||
     raise AuthenticationError, message: @missing_secret_key_error_message
   end
 
   defp get_api_endpoint do
-    System.get_env("STRIPE_API_ENDPOINT") || 
-    Application.get_env(:stripe, :api_endpoint) || 
+    System.get_env("STRIPE_API_ENDPOINT") ||
+    Application.get_env(:stripe, :api_endpoint) ||
     @default_api_endpoint
   end
 
@@ -55,13 +55,13 @@ defmodule Stripe do
   end
 
   defp create_headers(opts) do
-    headers = 
+    headers =
       [{"Authorization", "Bearer #{get_secret_key()}"},
        {"User-Agent", "Stripe/v1 stripe-elixir/#{@client_version}"},
        {"Content-Type", "application/x-www-form-urlencoded"}]
 
-    case Keyword.get(opts, :stripe_account) do 
-      nil -> headers 
+    case Keyword.get(opts, :stripe_account) do
+      nil -> headers
       account_id -> [{"Stripe-Account", account_id} | headers]
     end
   end
@@ -88,7 +88,12 @@ defmodule Stripe do
         401 ->
           %AuthenticationError{message: message}
         402 ->
-          %CardError{message: message, code: error["code"], param: error["param"]}
+          %CardError{
+            message: message,
+            code: error["code"],
+            param: error["param"],
+            decline_code: error["decline_code"]
+          }
         429 ->
           %RateLimitError{message: message}
         _ ->
